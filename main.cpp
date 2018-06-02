@@ -172,13 +172,17 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 //	myFile.close();
 
 	for(Arrangement_2::Face_const_handle face = free_space_arrangement.faces_begin(); face != free_space_arrangement.faces_end(); ++face) {
-		auto beginning = face->outer_ccbs_begin();
-		auto circular = beginning;
+		if(face->has_outer_ccb()) {
+			Arrangement_2::Ccb_halfedge_circulator beginning = face->outer_ccbs();
+			auto circular = beginning;
 
-		do {
-			// how to convert circular and get halfedge ??
+			do {
+				// how to convert circular and get halfedge ??
+				cout << circular->target()->point() << " " << circular->source()->point();
+				circular++;
+			}
+			while(circular != beginning);
 		}
-		while(++circular != face->outer_ccbs_end());
 
 	}
 		//convert triplets to trapezoid
