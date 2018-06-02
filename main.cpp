@@ -183,32 +183,32 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 		//convert triplets to trapezoid
 		//go over all faces created in the decomposition
 		//go over the trapezoids
-int counter=0;
-	for (auto i=free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
-		counter++;
-	}
-
-	cout<<counter<<endl;
-
-
-
-	 auto i = free_space_arrangement.faces_begin();
-
-	 while (!i->has_outer_ccb()) {
-		 i++;
-	 }
-
-
-	 Arrangement_2::Ccb_halfedge_circulator outerCCb = i->outer_ccb();
-
-	 cout<<"face circulator"<<endl;
-	 auto j = outerCCb;
-
-	 do {
-		 cout<<j->target()->point()<<" "<<j->source()->point()<<endl;
-		 j++;
-
-	 }	while (j!=outerCCb);
+//int counter=0;
+//	for (auto i=free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
+//		counter++;
+//	}
+//
+//	cout<<counter<<endl;
+//
+//
+//
+//	 auto i = free_space_arrangement.faces_begin();
+//
+//	 while (!i->has_outer_ccb()) {
+//		 i++;
+//	 }
+//
+//
+//	 Arrangement_2::Ccb_halfedge_circulator outerCCb = i->outer_ccb();
+//
+//	 cout<<"face circulator"<<endl;
+//	 auto j = outerCCb;
+//
+//	 do {
+//		 cout<<j->target()->point()<<" "<<j->source()->point()<<endl;
+//		 j++;
+//
+//	 }	while (j!=outerCCb);
 
 
 
