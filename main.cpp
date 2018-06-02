@@ -54,11 +54,21 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 		polygon_set.join(obstacles.at(i));
 	}
 
+
+
 	// get free space polygon set
-	polygon_set.complement();
+//	polygon_set.complement();
 
 	// create an arrangement from the polygon set
 	Arrangement_2 free_space_arrangement = polygon_set.arrangement();
+
+	for (auto i=outer_obstacle.edges_begin(); i!=outer_obstacle.edges_end(); i++) {
+		Segment_2 addSeg(i->point(0),i->point(1));
+		CGAL::insert(free_space_arrangement,addSeg);
+	}
+
+
+	cout<<"got here1"<<endl;
 
 	//Trapezoidal decomposition
 	typedef std::list<std::pair<Arrangement_2::Vertex_const_handle,
@@ -83,51 +93,87 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 		double x = p.x().to_double();
 		double y = p.y().to_double();
 
-		cout << "("<< x<< " , "<< y << ")"<< endl;
-		cout << it->second.first << endl;
-		cout << it->second.second << endl;
-
-
 		//check upper element
 		//TODO: wrap all polygons with a bounding box slightly larger.
 		if (assign(edge,it->second.first)) { //if upper element is non fictitious half-edge
 			if (!edge->is_fictitious()) {
+				cout<<"(x,y): "<<it->first->point()<<" upper edge points: "<< edge->source()->point()<<" "<<edge->target()->point()<<endl;
 				//todo connect vertex to edge with vertical segment
 				line = Line_2(it->first->point(),horizontalVec);
 				seg = Segment_2(edge->source()->point(),edge->target()->point());
 				auto result = (CGAL::intersection(line,seg));
+				cout<<"got here3"<<endl;
 				Point_2* p = boost::get<Point_2 >(&*(result));
+				cout<<"got here4"<<endl;
 				Segment_2 addSeg(*p,it->first->point());
-				CGAL::insert_non_intersecting_curve(free_space_arrangement,seg);
+				CGAL::insert_non_intersecting_curve(free_space_arrangement,addSeg);
 			}
 		}
 		if (assign(vert,it->second.first)) { //if upper element is non fictitious half-edge
+			cout<<"(x,y): "<<it->first->point()<<" upper point: "<< vert->point()<<endl;
 				Segment_2 addSeg(vert->point(),it->first->point());
-				 CGAL::insert_non_intersecting_curve(free_space_arrangement,seg);
+				 CGAL::insert_non_intersecting_curve(free_space_arrangement,addSeg);
 
 			}
 
 		//check lower elements
-
 		if (assign(edge,it->second.second)) { //if upper element is non fictitious half-edge
 			if (!edge->is_fictitious()) {
+				cout<<"(x,y): "<<it->first->point()<<" lower edge points: "<< edge->source()->point()<<" "<<edge->target()->point()<<endl;
 				//todo connect vertex to edge with vertical segment
 				line = Line_2(it->first->point(),horizontalVec);
 				seg = Segment_2(edge->source()->point(),edge->target()->point());
 				auto result = (CGAL::intersection(line,seg));
 				Point_2* p = boost::get<Point_2 >(&*(result));
 				Segment_2 addSeg(*p,it->first->point());
-				CGAL::insert_non_intersecting_curve(free_space_arrangement,seg);
+				CGAL::insert_non_intersecting_curve(free_space_arrangement,addSeg);
 			}
 		}
 		if (assign(vert,it->second.second)) { //if upper element is non fictitious half-edge
+			cout<<"(x,y): "<<it->first->point()<<" lower point: "<< vert->point()<<endl;
 				Segment_2 addSeg(vert->point(),it->first->point());
-				 CGAL::insert_non_intersecting_curve(free_space_arrangement,seg);
+				 CGAL::insert_non_intersecting_curve(free_space_arrangement,addSeg);
 
 			}
 		}
 
+	//output mesh structure using ipe
+	std::ofstream myFile;
+	std::ifstream Template;
+	 std::string line2;
+	Template.open("ipe2.xml");
+	myFile.open("Ipe.xml");
+
+
+	while (std::getline(Template,line2)) {
+		myFile <<line2<<"\n";
+	}
+
+	myFile << "<page>\n";
+
+	for (auto i=free_space_arrangement.vertices_begin(); i!=free_space_arrangement.vertices_end(); i++) {
+	myFile << "<use name=\"mark/disk(sx)\" " << "pos= \"" << i->point().x().to_double() << " " << i->point().y().to_double() << "\" size=\"normal\" stroke=\"black\"/>\n";
+	}
+
+	for (auto i = free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
+
+	Point_2 p1 = i->source()->point();
+
+	Point_2 p2 = i->target()->point();
+
+	myFile << "<path stroke = \"black\"> \n"  << p1.x().to_double() <<" "<< p1.y().to_double() <<" m \n" << p2.x().to_double() <<" "<<p2.y().to_double() << " l \n" << "</path> \n";
+
+
+	}
+
+	myFile << "</page>\n";
+	myFile << "</ipe>\n";
+	myFile.close();
+
+
 		//convert triplets to trapezoid
+		//go over all faces created in the decomposition
+		//go over the trapezoids
 
 	return vector<pair<Point_2, Point_2>>();
 }
