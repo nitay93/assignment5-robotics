@@ -137,40 +137,50 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 			}
 		}
 
-	//output mesh structure using ipe
-	std::ofstream myFile;
-	std::ifstream Template;
-	 std::string line2;
-	Template.open("ipe2.xml");
-	myFile.open("Ipe.xml");
+//	//output mesh structure using ipe
+//	std::ofstream myFile;
+//	std::ifstream Template;
+//	 std::string line2;
+//	Template.open("ipe2.xml");
+//	myFile.open("Ipe.xml");
+//
+//
+//	while (std::getline(Template,line2)) {
+//		myFile <<line2<<"\n";
+//	}
+//
+//	myFile << "<page>\n";
+//
+//	for (auto i=free_space_arrangement.vertices_begin(); i!=free_space_arrangement.vertices_end(); i++) {
+//	myFile << "<use name=\"mark/disk(sx)\" " << "pos= \"" << i->point().x().to_double() << " " << i->point().y().to_double() << "\" size=\"normal\" stroke=\"black\"/>\n";
+//	}
+//
+//	for (auto i = free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
+//
+//	Point_2 p1 = i->source()->point();
+//
+//
+//	Point_2 p2 = i->target()->point();
+//
+//	myFile << "<path stroke = \"black\"> \n"  << p1.x().to_double() <<" "<< p1.y().to_double() <<" m \n" << p2.x().to_double() <<" "<<p2.y().to_double() << " l \n" << "</path> \n";
+//
+//
+//	}
+//
+//	myFile << "</page>\n";
+//	myFile << "</ipe>\n";
+//	myFile.close();
 
+	for(Arrangement_2::Face_const_handle face = free_space_arrangement.faces_begin(); face != free_space_arrangement.faces_end(); ++face) {
+		auto beginning = face->outer_ccbs_begin();
+		auto circular = beginning;
 
-	while (std::getline(Template,line2)) {
-		myFile <<line2<<"\n";
+		do {
+			// how to convert circular and get halfedge ??
+		}
+		while(++circular != face->outer_ccbs_end());
+
 	}
-
-	myFile << "<page>\n";
-
-	for (auto i=free_space_arrangement.vertices_begin(); i!=free_space_arrangement.vertices_end(); i++) {
-	myFile << "<use name=\"mark/disk(sx)\" " << "pos= \"" << i->point().x().to_double() << " " << i->point().y().to_double() << "\" size=\"normal\" stroke=\"black\"/>\n";
-	}
-
-	for (auto i = free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
-
-	Point_2 p1 = i->source()->point();
-
-	Point_2 p2 = i->target()->point();
-
-	myFile << "<path stroke = \"black\"> \n"  << p1.x().to_double() <<" "<< p1.y().to_double() <<" m \n" << p2.x().to_double() <<" "<<p2.y().to_double() << " l \n" << "</path> \n";
-
-
-	}
-
-	myFile << "</page>\n";
-	myFile << "</ipe>\n";
-	myFile.close();
-
-
 		//convert triplets to trapezoid
 		//go over all faces created in the decomposition
 		//go over the trapezoids
