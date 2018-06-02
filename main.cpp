@@ -85,6 +85,7 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 	Vector_2 horizontalVec = Point_2(0,1)-Point_2(0,0);
 	Line_2 line;
 	Segment_2 seg;
+	list<Segment_2> segList;
 
 	for(Vert_decomp_list::iterator it = vd_list.begin(); it != vd_list.end(); ++it) {
 //		cout << it->first << endl;
@@ -106,13 +107,15 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 				Point_2* p = boost::get<Point_2 >(&*(result));
 				cout<<"got here4"<<endl;
 				Segment_2 addSeg(*p,it->first->point());
-				CGAL::insert_non_intersecting_curve(free_space_arrangement,addSeg);
+				segList.push_back(addSeg);
+	//			CGAL::insert(free_space_arrangement,addSeg);
 			}
 		}
 		if (assign(vert,it->second.first)) { //if upper element is non fictitious half-edge
 			cout<<"(x,y): "<<it->first->point()<<" upper point: "<< vert->point()<<endl;
 				Segment_2 addSeg(vert->point(),it->first->point());
-				 CGAL::insert_non_intersecting_curve(free_space_arrangement,addSeg);
+				segList.push_back(addSeg);
+	//			 CGAL::insert(free_space_arrangement,addSeg);
 
 			}
 
@@ -126,68 +129,88 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 				auto result = (CGAL::intersection(line,seg));
 				Point_2* p = boost::get<Point_2 >(&*(result));
 				Segment_2 addSeg(*p,it->first->point());
-				CGAL::insert_non_intersecting_curve(free_space_arrangement,addSeg);
+				segList.push_back(addSeg);
+	//			CGAL::insert(free_space_arrangement,addSeg);
 			}
 		}
 		if (assign(vert,it->second.second)) { //if upper element is non fictitious half-edge
 			cout<<"(x,y): "<<it->first->point()<<" lower point: "<< vert->point()<<endl;
 				Segment_2 addSeg(vert->point(),it->first->point());
-				 CGAL::insert_non_intersecting_curve(free_space_arrangement,addSeg);
+				segList.push_back(addSeg);
+	//			 CGAL::insert(free_space_arrangement,addSeg);
 
 			}
 		}
 
-//	//output mesh structure using ipe
-//	std::ofstream myFile;
-//	std::ifstream Template;
-//	 std::string line2;
-//	Template.open("ipe2.xml");
-//	myFile.open("Ipe.xml");
-//
-//
-//	while (std::getline(Template,line2)) {
-//		myFile <<line2<<"\n";
-//	}
-//
-//	myFile << "<page>\n";
-//
-//	for (auto i=free_space_arrangement.vertices_begin(); i!=free_space_arrangement.vertices_end(); i++) {
-//	myFile << "<use name=\"mark/disk(sx)\" " << "pos= \"" << i->point().x().to_double() << " " << i->point().y().to_double() << "\" size=\"normal\" stroke=\"black\"/>\n";
-//	}
-//
-//	for (auto i = free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
-//
-//	Point_2 p1 = i->source()->point();
-//
-//
-//	Point_2 p2 = i->target()->point();
-//
-//	myFile << "<path stroke = \"black\"> \n"  << p1.x().to_double() <<" "<< p1.y().to_double() <<" m \n" << p2.x().to_double() <<" "<<p2.y().to_double() << " l \n" << "</path> \n";
-//
-//
-//	}
-//
-//	myFile << "</page>\n";
-//	myFile << "</ipe>\n";
-//	myFile.close();
+	for (auto i=segList.begin(); i!=segList.end(); i++) {
+		CGAL::insert(free_space_arrangement,*i);
+	}
+/*
+	//output mesh structure using ipe
+	std::ofstream myFile;
+	std::ifstream Template;
+	 std::string line2;
+	Template.open("ipe2.xml");
+	myFile.open("Ipe.xml");
 
-	for(Arrangement_2::Face_const_handle face = free_space_arrangement.faces_begin(); face != free_space_arrangement.faces_end(); ++face) {
-		if(face->has_outer_ccb()) {
-			Arrangement_2::Ccb_halfedge_circulator beginning = face->outer_ccbs();
-			auto circular = beginning;
 
-			do {
-				// how to convert circular and get halfedge ??
-				cout << circular->target()->point() << " " << circular->source()->point();
-				circular++;
-			}
-			while(circular != beginning);
-		}
+	while (std::getline(Template,line2)) {
+		myFile <<line2<<"\n";
+	}
+
+	myFile << "<page>\n";
+
+	for (auto i=free_space_arrangement.vertices_begin(); i!=free_space_arrangement.vertices_end(); i++) {
+	myFile << "<use name=\"mark/disk(sx)\" " << "pos= \"" << i->point().x().to_double() << " " << i->point().y().to_double() << "\" size=\"normal\" stroke=\"black\"/>\n";
+	}
+
+	for (auto i = free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
+
+	Point_2 p1 = i->source()->point();
+
+	Point_2 p2 = i->target()->point();
+
+	myFile << "<path stroke = \"black\"> \n"  << p1.x().to_double() <<" "<< p1.y().to_double() <<" m \n" << p2.x().to_double() <<" "<<p2.y().to_double() << " l \n" << "</path> \n";
+
 
 	}
+
+	myFile << "</page>\n";
+	myFile << "</ipe>\n";
+	myFile.close();
+
+*/
 		//convert triplets to trapezoid
 		//go over all faces created in the decomposition
 		//go over the trapezoids
+int counter=0;
+	for (auto i=free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
+		counter++;
+	}
+
+	cout<<counter<<endl;
+
+
+
+	 auto i = free_space_arrangement.faces_begin();
+
+	 while (!i->has_outer_ccb()) {
+		 i++;
+	 }
+
+
+	 Arrangement_2::Ccb_halfedge_circulator outerCCb = i->outer_ccb();
+
+	 cout<<"face circulator"<<endl;
+	 auto j = outerCCb;
+
+	 do {
+		 cout<<j->target()->point()<<" "<<j->source()->point()<<endl;
+		 j++;
+
+	 }	while (j!=outerCCb);
+
+
 
 	return vector<pair<Point_2, Point_2>>();
 }
