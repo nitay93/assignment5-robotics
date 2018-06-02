@@ -29,5 +29,6 @@ typedef typename CGAL::Polygon_2<Kernel> Polygon_2;
 typedef typename CGAL::Gps_segment_traits_2< Kernel> Gps_traits_2;
 typedef typename CGAL::Arrangement_2<Gps_traits_2, CGAL::Gps_default_dcel<Gps_traits_2>> Arrangement_2;
 typedef typename CGAL::General_polygon_set_2<Gps_traits_2> Polygon_set_2;
-
+typedef typename Arrangement_2::Vertex_const_handle Arr2_Vertex;
+typedef typename Arrangement_2::Halfedge_const_handle Arr2_hEdge;
 #endif //INC_5_CGAL_DEFINES_H

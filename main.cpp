@@ -69,6 +69,13 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 
 	std::list<Trapezoid> trapezoids;
 
+
+	Arr2_Vertex vert;
+	Arr2_hEdge edge;
+	Vector_2 horizontalVec = Point_2(0,1)-Point_2(0,0);
+	Line_2 line;
+	Segment_2 seg;
+
 	for(Vert_decomp_list::iterator it = vd_list.begin(); it != vd_list.end(); ++it) {
 //		cout << it->first << endl;
 //		cout << it->first. << endl;
@@ -79,8 +86,48 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 		cout << "("<< x<< " , "<< y << ")"<< endl;
 		cout << it->second.first << endl;
 		cout << it->second.second << endl;
+
+
+		//check upper element
+		//TODO: wrap all polygons with a bounding box slightly larger.
+		if (assign(edge,it->second.first)) { //if upper element is non fictitious half-edge
+			if (!edge->is_fictitious()) {
+				//todo connect vertex to edge with vertical segment
+				line = Line_2(it->first->point(),horizontalVec);
+				seg = Segment_2(edge->source()->point(),edge->target()->point());
+				auto result = (CGAL::intersection(line,seg));
+				Point_2* p = boost::get<Point_2 >(&*(result));
+				Segment_2 addSeg(*p,it->first->point());
+				CGAL::insert_non_intersecting_curve(free_space_arrangement,seg);
+			}
+		}
+		if (assign(vert,it->second.first)) { //if upper element is non fictitious half-edge
+				Segment_2 addSeg(vert->point(),it->first->point());
+				 CGAL::insert_non_intersecting_curve(free_space_arrangement,seg);
+
+			}
+
+		//check lower elements
+
+		if (assign(edge,it->second.second)) { //if upper element is non fictitious half-edge
+			if (!edge->is_fictitious()) {
+				//todo connect vertex to edge with vertical segment
+				line = Line_2(it->first->point(),horizontalVec);
+				seg = Segment_2(edge->source()->point(),edge->target()->point());
+				auto result = (CGAL::intersection(line,seg));
+				Point_2* p = boost::get<Point_2 >(&*(result));
+				Segment_2 addSeg(*p,it->first->point());
+				CGAL::insert_non_intersecting_curve(free_space_arrangement,seg);
+			}
+		}
+		if (assign(vert,it->second.second)) { //if upper element is non fictitious half-edge
+				Segment_2 addSeg(vert->point(),it->first->point());
+				 CGAL::insert_non_intersecting_curve(free_space_arrangement,seg);
+
+			}
+		}
+
 		//convert triplets to trapezoid
-	}
 
 	return vector<pair<Point_2, Point_2>>();
 }
