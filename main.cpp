@@ -7,6 +7,12 @@
 
 using namespace std;
 
+struct Trapezoid {
+//	Trapezoid left_neighbor;
+//	Trapezoid right_neighbor;
+	Segment_2 top_edge;
+	Segment_2 bottom_edge;
+};
 
 Point_2 loadPoint_2(std::ifstream &is) {
     Kernel::FT x, y;
@@ -39,8 +45,44 @@ vector<Polygon_2> loadPolygons(ifstream &is) {
 vector<pair<Point_2, Point_2>>
 findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, const Point_2 &end2,
          const Polygon_2 &outer_obstacle, vector<Polygon_2> &obstacles) {
-    // TODO: implement this function :)
-    return vector<pair<Point_2, Point_2>>();
+
+	int obstacles_size = obstacles.size();
+
+	// add all obstacles to polygon set
+	Polygon_set_2 polygon_set;
+	for(int i = 0; i < obstacles_size; i++) {
+		polygon_set.join(obstacles.at(i));
+	}
+
+	// get free space polygon set
+	polygon_set.complement();
+
+	// create an arrangement from the polygon set
+	Arrangement_2 free_space_arrangement = polygon_set.arrangement();
+
+	//Trapezoidal decomposition
+	typedef std::list<std::pair<Arrangement_2::Vertex_const_handle,
+	                              std::pair<CGAL::Object, CGAL::Object> > >
+	Vert_decomp_list;
+	Vert_decomp_list vd_list;
+	CGAL::decompose(free_space_arrangement, std::back_inserter(vd_list));
+
+	std::list<Trapezoid> trapezoids;
+
+	for(Vert_decomp_list::iterator it = vd_list.begin(); it != vd_list.end(); ++it) {
+//		cout << it->first << endl;
+//		cout << it->first. << endl;
+		Point_2 p = it->first->point();
+		double x = p.x().to_double();
+		double y = p.y().to_double();
+
+		cout << "("<< x<< " , "<< y << ")"<< endl;
+		cout << it->second.first << endl;
+		cout << it->second.second << endl;
+		//convert triplets to trapezoid
+	}
+
+	return vector<pair<Point_2, Point_2>>();
 }
 
 int main(int argc, char *argv[]) {
