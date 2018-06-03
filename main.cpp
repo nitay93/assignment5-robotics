@@ -73,12 +73,6 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 	for(int i = 0; i < obstacles_size; i++) {
 		Polygon_2 obstacle = obstacles.at(i);
 		polygon_set.join(obstacle);
-
-		// add every obstacle vertex to graph
-		for(auto v = obstacle.vertices_begin();
-				v != obstacle.vertices_end(); v++) {
-			vertices.insert(*v);
-		}
 	}
 
 
@@ -176,6 +170,8 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 
 	for (auto i=segList.begin(); i!=segList.end(); i++) {
 		CGAL::insert(free_space_arrangement,*i);
+		vertices.insert(i->source());
+		vertices.insert(i->target());
 	}
 
 	// copy vertices to vector
