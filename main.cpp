@@ -7,12 +7,7 @@
 
 using namespace std;
 
-struct Trapezoid {
-//	Trapezoid left_neighbor;
-//	Trapezoid right_neighbor;
-	Segment_2 top_edge;
-	Segment_2 bottom_edge;
-};
+const double INF = numeric_limits<double>::max();
 
 Point_2 loadPoint_2(std::ifstream &is) {
     Kernel::FT x, y;
@@ -42,16 +37,48 @@ vector<Polygon_2> loadPolygons(ifstream &is) {
     return ret;
 }
 
+pair<double, double> to_double(Point_2 p) {
+  return pair<double, double>(p.x().to_double(), p.y().to_double());
+}
+
+string point2string(Point_2 p) {
+	pair<double, double> pDouble = to_double(p);
+	stringstream sstm;
+	sstm << "(" << pDouble.first << " , " << pDouble.second << ")";
+	return sstm.str();
+}
+
+void print_point(Point_2  p) {
+  cout <<  point2string(p);
+}
+
+bool has(set<int> s, int x) {
+	return s.find(x) != s.end();
+}
 vector<pair<Point_2, Point_2>>
 findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, const Point_2 &end2,
          const Polygon_2 &outer_obstacle, vector<Polygon_2> &obstacles) {
 
 	int obstacles_size = obstacles.size();
 
+	// create graph vertices set
+	set<Point_2> vertices;
+	vertices.insert(start1);
+	vertices.insert(end1);
+	vertices.insert(start2);
+	vertices.insert(end2);
+
 	// add all obstacles to polygon set
 	Polygon_set_2 polygon_set;
 	for(int i = 0; i < obstacles_size; i++) {
-		polygon_set.join(obstacles.at(i));
+		Polygon_2 obstacle = obstacles.at(i);
+		polygon_set.join(obstacle);
+
+		// add every obstacle vertex to graph
+		for(auto v = obstacle.vertices_begin();
+				v != obstacle.vertices_end(); v++) {
+			vertices.insert(*v);
+		}
 	}
 
 
@@ -61,6 +88,24 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 
 	// create an arrangement from the polygon set
 	Arrangement_2 free_space_arrangement = polygon_set.arrangement();
+	for(Arrangement_2::Face_handle face = free_space_arrangement.faces_begin(); face != free_space_arrangement.faces_end(); ++face) {
+		if(!face->is_unbounded()) {
+			cout << " polygon : " << endl;
+			Arrangement_2::Ccb_halfedge_circulator beginning = face->outer_ccb();
+			auto circular = beginning;
+
+			do {
+				// how to convert circular and get halfedge ??
+				cout << "half-edge : [";
+				print_point(circular->source()->point());
+				cout << " , ";
+				print_point(circular->target()->point());
+				cout << " ]" << endl;
+				circular++;
+			}
+			while(circular != beginning);
+		}
+	}
 
 	for (auto i=outer_obstacle.edges_begin(); i!=outer_obstacle.edges_end(); i++) {
 		Segment_2 addSeg(i->point(0),i->point(1));
@@ -68,17 +113,12 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 	}
 
 
-	cout<<"got here1"<<endl;
-
 	//Trapezoidal decomposition
 	typedef std::list<std::pair<Arrangement_2::Vertex_const_handle,
 	                              std::pair<CGAL::Object, CGAL::Object> > >
 	Vert_decomp_list;
 	Vert_decomp_list vd_list;
 	CGAL::decompose(free_space_arrangement, std::back_inserter(vd_list));
-
-	std::list<Trapezoid> trapezoids;
-
 
 	Arr2_Vertex vert;
 	Arr2_hEdge edge;
@@ -88,8 +128,6 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 	list<Segment_2> segList;
 
 	for(Vert_decomp_list::iterator it = vd_list.begin(); it != vd_list.end(); ++it) {
-//		cout << it->first << endl;
-//		cout << it->first. << endl;
 		Point_2 p = it->first->point();
 		double x = p.x().to_double();
 		double y = p.y().to_double();
@@ -98,21 +136,17 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 		//TODO: wrap all polygons with a bounding box slightly larger.
 		if (assign(edge,it->second.first)) { //if upper element is non fictitious half-edge
 			if (!edge->is_fictitious()) {
-				cout<<"(x,y): "<<it->first->point()<<" upper edge points: "<< edge->source()->point()<<" "<<edge->target()->point()<<endl;
 				//todo connect vertex to edge with vertical segment
 				line = Line_2(it->first->point(),horizontalVec);
 				seg = Segment_2(edge->source()->point(),edge->target()->point());
 				auto result = (CGAL::intersection(line,seg));
-				cout<<"got here3"<<endl;
 				Point_2* p = boost::get<Point_2 >(&*(result));
-				cout<<"got here4"<<endl;
 				Segment_2 addSeg(*p,it->first->point());
 				segList.push_back(addSeg);
 	//			CGAL::insert(free_space_arrangement,addSeg);
 			}
 		}
 		if (assign(vert,it->second.first)) { //if upper element is non fictitious half-edge
-			cout<<"(x,y): "<<it->first->point()<<" upper point: "<< vert->point()<<endl;
 				Segment_2 addSeg(vert->point(),it->first->point());
 				segList.push_back(addSeg);
 	//			 CGAL::insert(free_space_arrangement,addSeg);
@@ -122,7 +156,6 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 		//check lower elements
 		if (assign(edge,it->second.second)) { //if upper element is non fictitious half-edge
 			if (!edge->is_fictitious()) {
-				cout<<"(x,y): "<<it->first->point()<<" lower edge points: "<< edge->source()->point()<<" "<<edge->target()->point()<<endl;
 				//todo connect vertex to edge with vertical segment
 				line = Line_2(it->first->point(),horizontalVec);
 				seg = Segment_2(edge->source()->point(),edge->target()->point());
@@ -134,7 +167,6 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 			}
 		}
 		if (assign(vert,it->second.second)) { //if upper element is non fictitious half-edge
-			cout<<"(x,y): "<<it->first->point()<<" lower point: "<< vert->point()<<endl;
 				Segment_2 addSeg(vert->point(),it->first->point());
 				segList.push_back(addSeg);
 	//			 CGAL::insert(free_space_arrangement,addSeg);
@@ -144,6 +176,146 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 
 	for (auto i=segList.begin(); i!=segList.end(); i++) {
 		CGAL::insert(free_space_arrangement,*i);
+	}
+
+	// copy vertices to vector
+	vector<Point_2> vertices_vectors;
+	std::copy(vertices.begin(), vertices.end(), std::back_inserter(vertices_vectors));
+
+	cout << " Vertices are : " << endl;
+	// create point to index map
+	map<Point_2, int> vertex2index;
+	for(int i=0; i<vertices_vectors.size(); i++){
+		cout << i << " " << point2string(vertices_vectors.at(i)) << endl;
+		vertex2index.insert(pair<Point_2,int>(vertices_vectors.at(i), i));
+	}
+
+	// initialize graph
+	int numV = vertices.size();
+	double** graph = (double**) calloc(numV, sizeof(double *));
+	for(int i=0; i<numV; i++) {
+		graph[i] = (double*) calloc(numV, sizeof(double));
+		for(int j=0; j<numV; j++)
+			graph[i][j] = (i == j ? 0 : INF);
+	}
+
+	list<Point_2> startEndPositions;
+	startEndPositions.push_back(start1);
+	startEndPositions.push_back(start2);
+	startEndPositions.push_back(end1);
+	startEndPositions.push_back(end2);
+
+	// go over throgh all faces, check if free and add appropriate edges
+	for(Arrangement_2::Face_handle face = free_space_arrangement.faces_begin(); face != free_space_arrangement.faces_end(); ++face) {
+		bool is_obstacle = true;
+		if(face->has_outer_ccb()) {
+			Arrangement_2::Ccb_halfedge_circulator beginning = face->outer_ccb();
+			vector<set<int>> orientations;
+
+			// init orientations
+			for(int i=0; i<startEndPositions.size(); i++) {
+					orientations.push_back(set<int>());
+				}
+
+			auto circular = beginning;
+			vector<Point_2> face_vertices;
+
+			do {
+				// how to convert circular and get halfedge ??
+				Point_2 source = circular->source()->point(),
+						target = circular->target()->point();
+
+				// remember orientation to start/end positions
+				int i = 0;
+				for(auto s = startEndPositions.begin();
+						s != startEndPositions.end(); s++, i++) {
+					set<int> orientation_set = orientations.at(i);
+					CGAL::Orientation o = CGAL::orientation(source, target, *s);
+					if(o == CGAL::LEFT_TURN)
+						orientation_set.insert(-1);
+					else if(o == CGAL::RIGHT_TURN)
+						orientation_set.insert(1);
+					else orientation_set.insert(0);
+
+				}
+
+//				cout << "half-edge : [";
+//				print_point(source);
+//				cout << " , ";
+//				print_point(target);
+//				cout << " ]" << endl;
+
+
+
+				face_vertices.push_back(source);
+
+				// check if face includes wall. if it doesn't => obstacle
+				for (auto wall=segList.begin(); wall!=segList.end(); wall++) {
+					if((wall->source() == source && wall->target() == target) ||
+							(wall->target() == source && wall->source() == target)) {
+						is_obstacle = false;
+						break;
+					}
+
+				}
+
+			}
+			while(++circular != beginning);
+
+//			vector<Point_2 *> toErase;
+			int i=0;
+			for(auto s = startEndPositions.begin();
+					s != startEndPositions.end(); s++, i++) {
+				set<int> orientation_set = orientations.at(i);
+				if( !has(orientation_set, -1) || !has(orientation_set, 1)) {
+					// start/end position in this face(or on boundry)
+					face_vertices.push_back(*s);
+					if(!has(orientation_set,0)) {
+						// we can be sure that it is not on boundry
+						// we don't have to look for this point anymore
+//						toErase.push_back(s);
+						s = startEndPositions.erase(s);
+					}
+				}
+			}
+
+//			for(Point_2 **x = toErase.begin(); x!=toErase.end(); x++) {
+//				startEndPositions.erase(*x);
+//			}
+			// connect edges
+			if(face->has_outer_ccb() && !is_obstacle) {
+				for(int i=0; i<face_vertices.size() - 1; i++) {
+					Point_2 p1 = face_vertices.at(i);
+
+					//if not in vertices it is probably an outer-bound vertex
+					if ( vertex2index.find(p1) != vertex2index.end()) {
+						int index1 = vertex2index.at(p1);
+						for(int j=i+1; j<face_vertices.size(); j++) {
+							Point_2 p2 = face_vertices.at(j);
+							if(vertex2index.find(p2) != vertex2index.end()) {
+								int index2 = vertex2index.at(p2);
+								double dist = sqrt(CGAL::squared_distance(p1, p2).to_double());
+
+								graph[index1][index2] = dist;
+								graph[index2][index1] = dist;
+							}
+						}
+					}
+
+				}
+			}
+		}
+
+	}
+
+	cout << "number of vertices : "<< numV << endl;
+	for(int i=0; i< numV; i++) {
+		for(int j = 0; j < numV; j++) {
+			if(graph[i][j] == INF)
+				cout << "inf ";
+			else cout << graph[i][j] << " ";
+		}
+		cout << endl;
 	}
 /*
 	//output mesh structure using ipe

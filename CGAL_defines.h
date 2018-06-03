@@ -6,6 +6,7 @@
 #define INC_5_CGAL_DEFINES_H
 
 #include <CGAL/Gmpq.h>
+#include <CGAL/enum.h>
 #include <CGAL/Cartesian.h>
 #include <CGAL/Point_2.h>
 #include <CGAL/Vector_2.h>
@@ -17,6 +18,8 @@
 #include <CGAL/Gps_segment_traits_2.h>
 #include <CGAL/Arr_vertical_decomposition_2.h>
 #include <CGAL/Boolean_set_operations_2/Gps_default_dcel.h>
+#include <CGAL/Arr_walk_along_line_point_location.h>
+
 
 typedef typename CGAL::Gmpq Number_type;
 typedef typename CGAL::Cartesian<Number_type> Kernel;
@@ -31,4 +34,6 @@ typedef typename CGAL::Arrangement_2<Gps_traits_2, CGAL::Gps_default_dcel<Gps_tr
 typedef typename CGAL::General_polygon_set_2<Gps_traits_2> Polygon_set_2;
 typedef typename Arrangement_2::Vertex_const_handle Arr2_Vertex;
 typedef typename Arrangement_2::Halfedge_const_handle Arr2_hEdge;
+typedef CGAL::Arr_walk_along_line_point_location<Arrangement_2> Walk_pl;
+
 #endif //INC_5_CGAL_DEFINES_H
