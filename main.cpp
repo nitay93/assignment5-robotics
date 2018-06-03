@@ -9,6 +9,11 @@ using namespace std;
 
 const double INF = numeric_limits<double>::max();
 
+
+double heuristic(Point_2 p1, Point_2 p2) {
+	return 0;
+}
+
 Point_2 loadPoint_2(std::ifstream &is) {
     Kernel::FT x, y;
     is >> x >> y;
@@ -69,38 +74,23 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 	vertices.insert(end2);
 
 	// add all obstacles to polygon set
-	Polygon_set_2 polygon_set;
+	Arrangement_2 free_space_arrangement;
 	for(int i = 0; i < obstacles_size; i++) {
 		Polygon_2 obstacle = obstacles.at(i);
-		polygon_set.join(obstacle);
+		CGAL::insert(free_space_arrangement,obstacle.edges_begin(),obstacle.edges_end());
 	}
 
-
-
-	// get free space polygon set
-//	polygon_set.complement();
-
-	// create an arrangement from the polygon set
-	Arrangement_2 free_space_arrangement = polygon_set.arrangement();
-	for(Arrangement_2::Face_handle face = free_space_arrangement.faces_begin(); face != free_space_arrangement.faces_end(); ++face) {
-		if(!face->is_unbounded()) {
-			cout << " polygon : " << endl;
-			Arrangement_2::Ccb_halfedge_circulator beginning = face->outer_ccb();
-			auto circular = beginning;
-
-			do {
-				// how to convert circular and get halfedge ??
-				cout << "half-edge : [";
-				print_point(circular->source()->point());
-				cout << " , ";
-				print_point(circular->target()->point());
-				cout << " ]" << endl;
-				circular++;
-			}
-			while(circular != beginning);
+	//identify obstacle faces
+	for (auto i=free_space_arrangement.faces_begin(); i!=free_space_arrangement.faces_end(); i++) {
+		if (!i->is_unbounded()) {
+		i->set_data(true);
+		} else {
+		i->set_data(false);
 		}
 	}
 
+	// create an arrangement from the polygon set
+	//add outer polygon
 	for (auto i=outer_obstacle.edges_begin(); i!=outer_obstacle.edges_end(); i++) {
 		Segment_2 addSeg(i->point(0),i->point(1));
 		CGAL::insert(free_space_arrangement,addSeg);
@@ -168,12 +158,81 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 			}
 		}
 
+	//add horizontal segments to arrangment
 	for (auto i=segList.begin(); i!=segList.end(); i++) {
 		CGAL::insert(free_space_arrangement,*i);
 		vertices.insert(i->source());
 		vertices.insert(i->target());
 	}
 
+
+	//the vertices are the middle of legal walls
+	int N=0;
+	std::vector<Arr2_hEdge> wallVec;
+			for (auto i=free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
+
+			if ((i->face()->data()==false) && (i->twin()->face()->data()==false)) {
+				i->set_data(N); //illegal wall
+				N++;
+				wallVec.push_back(i->twin()->twin());
+			} else {
+				i->set_data(-1);
+			}
+			}
+
+	//algorithm:
+
+	std::vector<double> g(N,INF);
+
+	std::vector<double> f(N,INF);
+
+
+	//populate graph
+
+	std::vector<list<Arr2_hEdge>> edges(N);
+
+	for (auto i: wallVec) {
+		auto temp = i->twin();
+		do {
+			if (temp->data()==0)  {//is legal wall
+				edges[temp->data()].push_back(temp);
+			}
+			temp++;
+		} while (temp!=(i->twin()));
+
+		auto twin = i->twin()->twin();
+		temp = twin;
+		do {
+			if (temp->data()>=0)  {//is legal wall
+				edges[temp->data()].push_back(temp);
+			}
+			temp++;
+		} while (temp!=twin);
+	}
+
+
+	std::set<int> Open; std::set<int> Closed;
+
+	while (!Open.empty()) {
+
+		//choose edge which minimized f(v);
+
+
+	}
+
+
+
+
+	//start and end vertices are only connected
+
+	//find trapezoids in optimal path for red robot, using a* with euclidean distance heurisitc (robot is point in configuration space)
+	//Open is set of indexes
+	//Closed is set of indexes
+
+
+	//TODO: currently, moves through edges of trapezoid, maybe implement something smarter
+
+/*
 	// copy vertices to vector
 	vector<Point_2> vertices_vectors;
 	std::copy(vertices.begin(), vertices.end(), std::back_inserter(vertices_vectors));
@@ -313,50 +372,39 @@ findPath(const Point_2 &start1, const Point_2 &end1, const Point_2 &start2, cons
 		}
 		cout << endl;
 	}
-/*
+
 	//output mesh structure using ipe
 	std::ofstream myFile;
 	std::ifstream Template;
 	 std::string line2;
 	Template.open("ipe2.xml");
 	myFile.open("Ipe.xml");
-
-
 	while (std::getline(Template,line2)) {
 		myFile <<line2<<"\n";
 	}
-
 	myFile << "<page>\n";
-
 	for (auto i=free_space_arrangement.vertices_begin(); i!=free_space_arrangement.vertices_end(); i++) {
 	myFile << "<use name=\"mark/disk(sx)\" " << "pos= \"" << i->point().x().to_double() << " " << i->point().y().to_double() << "\" size=\"normal\" stroke=\"black\"/>\n";
 	}
-
 	for (auto i = free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
-
 	Point_2 p1 = i->source()->point();
-
 	Point_2 p2 = i->target()->point();
-
 	myFile << "<path stroke = \"black\"> \n"  << p1.x().to_double() <<" "<< p1.y().to_double() <<" m \n" << p2.x().to_double() <<" "<<p2.y().to_double() << " l \n" << "</path> \n";
-
-
 	}
-
 	myFile << "</page>\n";
 	myFile << "</ipe>\n";
 	myFile.close();
-
 */
 		//convert triplets to trapezoid
 		//go over all faces created in the decomposition
 		//go over the trapezoids
-//int counter=0;
-//	for (auto i=free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
-//		counter++;
-//	}
-//
-//	cout<<counter<<endl;
+int counter=0;
+	for (auto i=free_space_arrangement.edges_begin(); i!=free_space_arrangement.edges_end(); i++) {
+		counter++;
+	//	i->set_data(true);
+	}
+
+	cout<<counter<<endl;
 //
 //
 //
